@@ -1,0 +1,242 @@
+/* Porcelain / Ember: shared tokens for the existing light and dark themes. */
+html:root {
+  --el-color-primary: #cc4d22;
+  --el-color-primary-dark-2: #b63c14;
+  --el-color-primary-light-3: #e98766;
+  --el-color-primary-light-5: #efad96;
+  --el-color-primary-light-7: #f6d0c2;
+  --el-color-primary-light-8: #f9e1d7;
+  --el-color-primary-light-9: #fcf0e9;
+  --el-bg-color: #fdfcfb;
+  --el-bg-color-page: #f5f3ef;
+  --el-bg-color-overlay: #fffdfa;
+  --el-text-color-primary: #252a29;
+  --el-text-color-regular: #505754;
+  --el-text-color-secondary: #727975;
+  --el-text-color-placeholder: #868c88;
+  --el-border-color: #e5e2dc;
+  --el-border-color-light: #ebe8e2;
+  --el-border-color-lighter: #efede8;
+  --el-fill-color: #efede8;
+  --el-fill-color-light: #f5f3ef;
+  --el-fill-color-lighter: #f9f7f3;
+  --el-fill-color-blank: #fdfcfb;
+  --el-border-radius-base: 9px;
+  --el-border-radius-small: 6px;
+  --el-box-shadow-light: 0 8px 28px #252a290a;
+  --el-box-shadow: 0 16px 48px #252a2914;
+  --el-box-shadow-lighter: 0 4px 16px #252a2908;
+  --extra-light-fill: #fbfaf7;
+  --light-ill: #f4f2ed;
+  --light-border: #ebe8e2;
+  --dark-border: #d7d5ce;
+  --base-fill: #efede8;
+  --regular-text-color: #626963;
+  --light-border-color: #ebe8e2;
+  --base-border-color: #e5e2dc;
+  --secondary-text-color: #767c77;
+  --aside-backgound: #232927;
+  --aside-right-border: none;
+  --choose-account-background: #fcf0e9;
+  --email-scroll-content-color: #767c77;
+  --email-hover-background: #faf4ef;
+  --form-desc-color: #727975;
+  --login-switch-color: #c9481c;
+  --scrollbar-track-color: #d1d0c8;
+  --loadding-background: #fdfcfbd9;
+  --message-block-color: #f5f3ef80;
+  --cm-accent: #f47946;
+  --cm-accent-soft: #fcf0e9;
+  --cm-accent-border: #f2bd9f;
+  --cm-sidebar-text: #e0e5df;
+  --cm-sidebar-muted: #9da8a1;
+  --cm-sidebar-active: #3a3028;
+  --cm-account-surface: #f6f4ef;
+  --cm-focus-ring: #d9502070;
+  --cm-on-primary: #ffffff;
+  --cm-sidebar-width: clamp(232px, 20.2vw, 300px);
+  --cm-account-width: clamp(240px, 20.2vw, 300px);
+  --cm-motion-fast: 140ms;
+  --cm-motion-base: 220ms;
+  --cm-motion-slow: 280ms;
+  --cm-motion-ease: cubic-bezier(.22, 1, .36, 1);
+  --cm-backdrop: rgba(35, 41, 39, .26);
+  --cm-glass-surface: rgba(253, 252, 251, .82);
+  --cm-glass-highlight: rgba(255, 255, 255, .85);
+  --cm-glass-tint: rgba(245, 243, 239, .65);
+  --cm-reading-overlay: transparent;
+  --cm-reading-paper: #ffffff;
+  --vt-duration: 380ms;
+  --vt-easing: var(--cm-motion-ease);
+}
+
+html.dark {
+  --el-color-primary: #f7976c;
+  --el-color-primary-dark-2: #ffb28f;
+  --el-color-primary-light-3: #c47c5d;
+  --el-color-primary-light-5: #925f4a;
+  --el-color-primary-light-7: #614336;
+  --el-color-primary-light-8: #48342b;
+  --el-color-primary-light-9: #322820;
+  --el-bg-color: #202522;
+  --el-bg-color-page: #191e1b;
+  --el-bg-color-overlay: #282e29;
+  --el-text-color-primary: #eeeee7;
+  --el-text-color-regular: #c4cbc2;
+  --el-text-color-secondary: #a1aba0;
+  --el-text-color-placeholder: #8d988c;
+  --el-border-color: #3b433b !important;
+  --el-border-color-light: #343c34;
+  --el-border-color-lighter: #2e362f;
+  --el-fill-color: #303830;
+  --el-fill-color-light: #2a322b;
+  --el-fill-color-lighter: #252d26;
+  --el-fill-color-blank: #202522;
+  --extra-light-fill: #222a23;
+  --light-ill: #2a322b;
+  --light-border: #3b433b;
+  --dark-border: #4c554b;
+  --base-fill: #303830;
+  --regular-text-color: #c4cbc2;
+  --light-border-color: #343c34;
+  --base-border-color: #3b433b;
+  --secondary-text-color: #a1aba0;
+  --aside-backgound: #171d19;
+  --choose-account-background: #342b23;
+  --email-scroll-content-color: #a1aba0;
+  --email-hover-background: #2b3029;
+  --form-desc-color: #a1aba0;
+  --login-switch-color: #f7976c;
+  --scrollbar-track-color: #566052;
+  --loadding-background: #202522dc;
+  --message-block-color: #191e1b80;
+  --cm-accent-soft: #342b23;
+  --cm-accent-border: #83553c;
+  --cm-sidebar-active: #342b23;
+  --cm-account-surface: #1c231e;
+  --cm-focus-ring: #f7976c80;
+  --cm-on-primary: #202522;
+  --cm-backdrop: rgba(9, 14, 10, .52);
+  --cm-glass-surface: rgba(32, 37, 34, .84);
+  --cm-glass-highlight: rgba(255, 255, 255, .07);
+  --cm-glass-tint: rgba(48, 56, 48, .55);
+  --cm-reading-overlay: rgba(25, 30, 27, .08);
+  --cm-reading-paper: #eceded;
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+button, .el-button, .el-input__wrapper, .el-select__wrapper,
+.el-menu-item, .el-dropdown-menu__item {
+  transition: background-color var(--cm-motion-fast) ease,
+    border-color var(--cm-motion-fast) ease,
+    color var(--cm-motion-fast) ease,
+    box-shadow var(--cm-motion-base) ease,
+    transform var(--cm-motion-fast) var(--cm-motion-ease);
+}
+
+button:focus-visible, a:focus-visible, input:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--cm-focus-ring);
+  outline-offset: 3px;
+}
+
+.el-button {
+  font-weight: 550;
+}
+
+.el-button--primary:not(.is-plain):not(.is-text):not(.is-link) {
+  box-shadow: 0 3px 8px #d9502014;
+  --el-button-text-color: var(--cm-on-primary);
+  --el-button-hover-text-color: var(--cm-on-primary);
+  --el-button-active-text-color: var(--cm-on-primary);
+  --el-button-hover-bg-color: var(--el-color-primary-dark-2);
+  --el-button-hover-border-color: var(--el-color-primary-dark-2);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .el-button--primary:not(.is-disabled):not(.is-text):not(.is-link):hover {
+    transform: translateY(-1px);
+    box-shadow: 0 5px 12px #d9502020;
+  }
+}
+
+.el-button:not(.is-disabled):active,
+.toolbar-button:active,
+.account-action:not(.unavailable):active,
+.receive-mode:active {
+  transform: scale(.97);
+}
+
+.el-dialog, .el-message-box, .el-notification {
+  border: 1px solid var(--el-border-color-light);
+  border-radius: 14px;
+}
+
+.el-dialog {
+  --el-dialog-padding-primary: 24px;
+}
+
+.el-dialog__title, .el-message-box__title {
+  font-weight: 650;
+  letter-spacing: -.025em;
+}
+
+.el-card {
+  --el-card-border-color: var(--el-border-color-light);
+  border-radius: 12px;
+}
+
+.el-table {
+  --el-table-header-bg-color: var(--el-fill-color-light);
+  --el-table-row-hover-bg-color: var(--email-hover-background);
+  --el-table-border-color: var(--el-border-color-lighter);
+  --el-table-bg-color: var(--el-bg-color);
+  --el-table-tr-bg-color: var(--el-bg-color);
+}
+
+.el-table th.el-table__cell {
+  height: 46px;
+  color: var(--el-text-color-secondary);
+  font-size: 12px;
+}
+
+.el-table td.el-table__cell {
+  padding: 12px 0;
+}
+
+.el-tabs__item.is-active, .el-tabs__item:hover {
+  color: var(--el-color-primary);
+}
+
+.el-dropdown__popper, .el-select__popper {
+  border-radius: 10px !important;
+}
+
+.el-empty__description p {
+  color: var(--el-text-color-secondary);
+  font-size: 13px;
+}
+
+.el-checkbox__inner {
+  border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
+  }
+  ::view-transition-old(root), ::view-transition-new(root) {
+    animation-duration: .01ms !important;
+  }
+  button:hover, button:active, .el-button:hover, .el-button:active,
+  .writer-box .writer, .toolbar .icon-item {
+    transform: none !important;
+  }
+}

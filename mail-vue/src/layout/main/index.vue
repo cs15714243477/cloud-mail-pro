@@ -1,0 +1,198 @@
+<template>
+  <div :class="accountShow && hasPerm('account:query') ? 'main-box-show' : 'main-box-hide'">
+    <div :class="accountShow && hasPerm('account:query') ? 'block-show' : 'block-hide'" @click="uiStore.accountShow = false"></div>
+    <account  :class="accountShow && hasPerm('account:query') ? 'show' : 'hide'" />
+    <router-view class="main-view" v-slot="{ Component,route }">
+      <keep-alive :include="['email','all-email','send','sys-setting','star','junk','archive','user','role','analysis','reg-key','draft']">
+        <component :is="Component" :key="route.name"/>
+      </keep-alive>
+    </router-view>
+  </div>
+</template>
+<script setup>
+import account from '@/layout/account/index.vue'
+import {useUiStore} from "@/store/ui.js";
+import {useSettingStore} from "@/store/setting.js";
+import {computed, onBeforeUnmount, onMounted, watch} from "vue";
+import { useRoute } from 'vue-router'
+import { hasPerm } from "@/perm/perm.js"
+
+const settingStore = useSettingStore()
+const uiStore = useUiStore();
+const route = useRoute()
+let  innerWidth =  window.innerWidth
+
+let elNotification = null
+
+const accountShow = computed(() => {
+  return uiStore.accountShow && settingStore.settings.manyEmail === 0
+})
+
+watch(() => uiStore.changeNotice, () => {
+
+  const settings = settingStore.settings
+
+  let data = {
+    notice: settings.notice,
+    noticeWidth: settings.noticeWidth,
+    noticeTitle: settings.noticeTitle,
+    noticeContent: settings.noticeContent,
+    noticeType: settings.noticeType,
+    noticeDuration: settings.noticeDuration,
+    noticePosition: settings.noticePosition,
+    noticeOffset: settings.noticeOffset
+  }
+
+  showNotice(data)
+})
+
+watch(() => uiStore.changePreview, () => {
+  showNotice(uiStore.previewData)
+})
+
+function showNotice(data) {
+
+  if (data.notice === 1) {
+    return;
+  }
+
+  if (elNotification) {
+    elNotification.close()
+  }
+
+  const style = document.createElement('style');
+  style.innerHTML = `
+  .custom-notice.el-notification {
+    --el-notification-width: min(${data.noticeWidth}px,calc(100% - 30px)) !important;
+  }
+  `;
+
+  document.head.appendChild(style);
+
+  elNotification = ElNotification({
+    title: data.noticeTitle,
+    message: `<div style="width: 100%;height: 100%;">${data.noticeContent}</div>`,
+    type: data.noticeType === 'none' ? '' : data.noticeType,
+    duration: data.noticeDuration,
+    position: data.noticePosition,
+    offset: data.noticeOffset,
+    dangerouslyUseHTMLString: true,
+    customClass: 'custom-notice'
+  })
+}
+
+onMounted(() => {
+  window.addEventListener('resize', handleResize)
+  handleResize()
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', handleResize)
+})
+
+const handleResize = () => {
+  if (['content','email','send'].includes(route.meta.name)) {
+    if (innerWidth !==  window.innerWidth) {
+      innerWidth = window.innerWidth;
+      uiStore.accountShow = window.innerWidth >= 767;
+    }
+  }
+}
+
+</script>
+<style lang="scss" scoped>
+
+.block-show, .block-hide {
+  position: fixed;
+  @media (max-width: 767px) {
+    position: absolute;
+    top: 0;
+    right: 0;
+    border: 0;
+    height: 100%;
+    width: 100%;
+    background: var(--cm-backdrop);
+    backdrop-filter: blur(2px);
+    z-index: 10;
+    transition: opacity var(--cm-motion-base) ease;
+  }
+}
+
+.block-show { opacity: 1; }
+
+.block-hide {
+  pointer-events: none;
+  opacity: 0;
+}
+
+.show, .hide {
+  transition: transform var(--cm-motion-slow) var(--cm-motion-ease),
+    opacity var(--cm-motion-base) ease;
+}
+
+.show {
+  opacity: 1;
+  transform: none;
+  @media (max-width: 767px) {
+    position: fixed;
+    top: 60px;
+    bottom: 0;
+    height: auto;
+    z-index: 100;
+    width: 260px;
+  }
+}
+
+.hide {
+  position: fixed;
+  transform: translateX(-100%);
+  opacity: 0;
+  @media (max-width: 1024px) {
+    width: 260px;
+    z-index: 100;
+  }
+  @media (max-width: 767px) {
+    top: 60px;
+    bottom: 0;
+    height: auto;
+  }
+}
+
+
+.main-box-show {
+  position: relative;
+  display: grid;
+  grid-template-columns: var(--cm-account-width) minmax(0, 1fr);
+  height: calc(100% - 60px);
+  @media (max-width: 767px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.main-box-hide {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  height: calc(100% - 60px);
+}
+
+
+.main-view {
+  background: var(--el-bg-color);
+  min-width: 0;
+}
+
+
+.navigation {
+  height: 30px;
+  border-bottom: solid 1px var(--el-menu-border-color);
+  display: inline-flex;
+  justify-items: center;
+  align-items: center;
+  width: 100%;
+  .tag {
+    background: var(--el-bg-color);
+    margin-left: 5px;
+  }
+}
+</style>

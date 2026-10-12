@@ -1,0 +1,39 @@
+import app from './hono/webs';
+import { email } from './email/email';
+import userService from './service/user-service';
+import verifyRecordService from './service/verify-record-service';
+import emailService from './service/email-service';
+import r2Service from './service/r2-service';
+import oauthService from "./service/oauth-service";
+import emailEventService from './service/email-event-service';
+export { EmailAgent } from './agent/email-agent';
+export default {
+	 async fetch(req, env, ctx) {
+
+		const url = new URL(req.url)
+
+		if (url.pathname.startsWith('/api/')) {
+			url.pathname = url.pathname.replace('/api', '')
+			req = new Request(url.toString(), req)
+			return app.fetch(req, env, ctx);
+		}
+
+		 if (['/static/','/attachments/'].some(p => url.pathname.startsWith(p))) {
+			 return await r2Service.toObjResp( { env }, url.pathname.substring(1));
+		 }
+
+		return env.assets.fetch(req);
+	},
+	email: email,
+	// Cloudflare Email Service delivery events (bounced/complained/...) arrive
+	// here via the `email.sending` event subscription bound in wrangler.toml.
+	async queue(batch, env, ctx) {
+		await emailEventService.consumeBatch(batch, env);
+	},
+	async scheduled(c, env, ctx) {
+		await verifyRecordService.clearRecord({ env })
+		await userService.resetDaySendCount({ env })
+		await emailService.completeReceiveAll({ env })
+		await oauthService.clearNoBindOathUser({ env })
+	},
+};
