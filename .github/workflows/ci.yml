@@ -29,6 +29,8 @@ jobs:
         run: pnpm --dir mail-worker install --frozen-lockfile
       - name: Build frontend
         run: pnpm --dir mail-vue build
+      - name: Run frontend tests
+        run: pnpm --dir mail-vue test
       - name: Run Worker unit tests
         run: pnpm --dir mail-worker exec vitest run --config vitest.unit.config.js
       - name: Check deployment scripts

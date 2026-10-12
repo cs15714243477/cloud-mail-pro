@@ -1,21 +1,41 @@
 <template>
   <Transition name="compose">
-  <div class="send" v-show="show">
+  <div class="send" v-show="show" role="dialog" aria-modal="true" :aria-label="t('composeEmail')">
     <div class="write-box">
       <div class="title">
         <div class="title-left">
           <span class="title-text">
             <Icon icon="hugeicons:quill-write-01" width="28" height="28"/>
           </span>
-          <span class="sender">{{ $t('sender') }}:</span>
-          <span class="sender-name">{{ form.name }}</span>
-          <span class="send-email"><{{ form.sendEmail }}></span>
+          <span class="compose-title">{{ form.sendType === 'reply' ? t('reply') : form.sendType === 'forward' ? t('forward') : t('composeEmail') }}</span>
         </div>
-        <div @click="close" style="cursor: pointer;">
+        <button class="compose-close" type="button" @click="close" :aria-label="t('closeComposer')">
           <Icon icon="material-symbols-light:close-rounded" width="22" height="22"/>
-        </div>
+        </button>
       </div>
       <div class="container">
+        <div class="sender-field">
+          <label id="compose-sender-label" class="item-title">{{ t('senderMailbox') }}</label>
+          <div class="sender-control">
+            <el-select :model-value="form.accountId" @change="selectSender" @visible-change="loadSenderAccounts"
+                       filterable :loading="senderLoading" :aria-label="t('senderMailbox')"
+                       aria-labelledby="compose-sender-label" aria-describedby="compose-sender-hint"
+                       :placeholder="t('selectSenderMailbox')" class="sender-select">
+              <el-option v-for="account in senderChoices" :key="account.accountId"
+                         :value="account.accountId" :label="account.email">
+                <span>{{ account.email }}</span>
+                <span v-if="account.name" class="sender-option-name"> · {{ account.name }}</span>
+              </el-option>
+            </el-select>
+            <div id="compose-sender-hint" class="sender-hint">
+              <template v-if="senderLoadError">
+                {{ t('senderLoadFailed') }}
+                <button type="button" @click="loadSenderAccounts(true)">{{ t('senderRetry') }}</button>
+              </template>
+              <template v-else>{{ t('senderMailboxHint') }}</template>
+            </div>
+          </div>
+        </div>
         <el-input-tag  @add-tag="addTagChange" tag-type="primary" @input="inputChange" size="default" v-model="form.receiveEmail" >
           <template #prefix>
             <div class="item-title" >{{ $t('recipient') }}</div>
@@ -116,6 +136,9 @@ import dayjs from "dayjs";
 import {useI18n} from "vue-i18n";
 import router from "@/router/index.js";
 import {ElMessageBox} from "element-plus";
+import {accountList} from '@/request/account.js';
+import {hasPerm} from '@/perm/perm.js';
+import {applyComposerSender, hasSameComposerSender} from './compose-sender.js';
 
 defineExpose({
   open,
@@ -142,6 +165,9 @@ const showContacts = ref(false)
 const mySelect = ref()
 let selectStatus = false
 const backReply = reactive({
+  accountId: null,
+  sendEmail: '',
+  name: '',
   receiveEmail: [],
   subject: '',
   content: '',
@@ -162,6 +188,43 @@ const form = reactive({
 })
 
 const selectRecipientList = ref([])
+const senderAccounts = ref([])
+const senderLoading = ref(false)
+const senderLoadError = ref(false)
+const senderChoices = computed(() => {
+  const primary = {...userStore.user.account, email: userStore.user.email, name: userStore.user.name};
+  const selected = {accountId: form.accountId, email: form.sendEmail, name: form.name};
+  const choices = new Map();
+  for (const account of [primary, accountStore.currentAccount, selected, ...senderAccounts.value]) {
+    if (account?.email && account.accountId > 0) choices.set(account.accountId, account);
+  }
+  return [...choices.values()];
+})
+
+function selectSender(accountId) {
+  applyComposerSender(form, senderChoices.value.find(account => account.accountId === accountId));
+}
+
+async function loadSenderAccounts(visible) {
+  if (!visible || senderLoading.value || !hasPerm('account:query')) return;
+  senderLoading.value = true;
+  senderLoadError.value = false;
+  let cursor;
+  let accounts = [];
+  try {
+    let page;
+    do {
+      page = await accountList(cursor?.accountId, 30, cursor?.sort);
+      accounts = [...accounts, ...page];
+      senderAccounts.value = accounts;
+      cursor = page.at(-1);
+    } while (page.length === 30 && show.value);
+  } catch {
+    senderLoadError.value = true;
+  } finally {
+    senderLoading.value = false;
+  }
+}
 
 const contacts = computed(() => writerStore.sendRecipientRecord.map(item => ({email: item})))
 
@@ -452,6 +515,9 @@ function openForward(email) {
     open()
 
     nextTick(() => {
+      backReply.accountId = form.accountId
+      backReply.sendEmail = form.sendEmail
+      backReply.name = form.name
       backReply.content = editor.value.getContent()
       backReply.subject = form.subject
       backReply.receiveEmail = form.receiveEmail
@@ -493,6 +559,9 @@ function openReply(email) {
     open()
 
     nextTick(() => {
+      backReply.accountId = form.accountId
+      backReply.sendEmail = form.sendEmail
+      backReply.name = form.name
       backReply.content = editor.value.getContent()
       backReply.subject = form.subject
       backReply.receiveEmail = form.receiveEmail
@@ -510,13 +579,9 @@ function formatImage(content) {
 
 function open() {
   if (!accountStore.currentAccount.email) {
-    form.sendEmail = userStore.user.email;
-    form.accountId = userStore.user.account.accountId;
-    form.name = userStore.user.name;
+    applyComposerSender(form, {...userStore.user.account, email: userStore.user.email, name: userStore.user.name});
   } else {
-    form.sendEmail = accountStore.currentAccount.email;
-    form.accountId = accountStore.currentAccount.accountId;
-    form.name = accountStore.currentAccount.name;
+    applyComposerSender(form, accountStore.currentAccount);
   }
   show.value = true;
   editor.value.focus()
@@ -572,7 +637,7 @@ function close() {
     if (backReply.sendType === 'forward' && form.receiveEmail.length === 0) {
       receiveFlag = true;
     }
-    if (subjectFlag && contentFlag && receiveFlag) {
+    if (subjectFlag && contentFlag && receiveFlag && hasSameComposerSender(form, backReply)) {
       resetForm();
       close()
       return;
@@ -673,30 +738,32 @@ function close() {
 
       .title-left {
         align-items: center;
-        display: grid;
-        grid-template-columns: auto auto auto 1fr;
+        display: flex;
+        gap: 10px;
       }
 
       .title-text {
       }
 
-      .sender {
-        margin-left: 8px;
+      .compose-title {
+        font-size: 17px;
+        font-weight: 600;
       }
 
-      .sender-name {
-        margin-left: 8px;
-        font-weight: bold;
+      .compose-close {
+        display: grid;
+        place-items: center;
+        width: 34px;
+        height: 34px;
+        padding: 0;
+        border: 0;
+        border-radius: 9px;
+        background: transparent;
+        color: var(--el-text-color-secondary);
+        cursor: pointer;
+        &:hover { background: var(--el-fill-color-light); }
+        &:focus-visible { outline: 2px solid var(--cm-focus-ring); }
       }
-
-      .send-email {
-        color: #999896;
-        margin-left: 5px;
-        white-space: nowrap;
-        text-overflow: ellipsis;
-        overflow: hidden;
-      }
-
 
       div {
         display: flex;
@@ -707,8 +774,29 @@ function close() {
     .container {
       height: 100%;
       display: grid;
-      grid-template-rows: auto auto 1fr auto;
+      grid-template-rows: auto auto auto 1fr auto;
       gap: 15px;
+
+      .sender-field {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        align-items: start;
+        gap: 12px;
+        padding: 10px 12px;
+        border: 1px solid var(--el-border-color-light);
+        border-radius: 10px;
+        background: var(--el-fill-color-lighter);
+        .item-title { padding-top: 7px; font-size: 13px; color: var(--el-text-color-secondary); }
+      }
+
+      .sender-select { width: 100%; max-width: 440px; }
+      .sender-hint {
+        margin-top: 5px;
+        font-size: 12px;
+        line-height: 1.5;
+        color: var(--el-text-color-secondary);
+        button { border: 0; padding: 0 4px; background: none; color: var(--el-color-primary); cursor: pointer; }
+      }
 
       .item-title {
       }

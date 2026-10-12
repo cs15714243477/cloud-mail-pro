@@ -4,6 +4,7 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
+    "test": "node --test test/*.test.js",
     "dev": "vite --mode dev",
     "remote": "vite --mode remote",
     "build": "vite build --mode release",

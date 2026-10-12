@@ -4,11 +4,12 @@
       <hanburger @click="changeAside"></hanburger>
       <span class="breadcrumb-item">{{ $t(route.meta.title) }}</span>
     </div>
-    <div v-perm="'email:send'" class="writer-box" @click="openSend">
-      <div class="writer">
+    <button v-perm="'email:send'" type="button" class="writer-box" @click="openSend" :aria-label="t('composeEmail')">
+      <span class="writer">
         <Icon icon="material-symbols:edit-outline-sharp" width="22" height="22"/>
-      </div>
-    </div>
+        <span class="writer-text">{{ t('composeEmail') }}</span>
+      </span>
+    </button>
     <div class="toolbar">
       <div v-if="uiStore.dark" class="sun-icon icon-item" @click="openDark($event)">
         <Icon icon="mingcute:sun-fill"/>
@@ -374,6 +375,10 @@ function formatName(email) {
 }
 
 .writer-box {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  font: inherit;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -381,9 +386,9 @@ function formatName(email) {
   margin-left: 5px;
 
   .writer {
-    width: 38px;
+    padding: 0 13px;
     height: 38px;
-    border-radius: 50%;
+    border-radius: 10px;
     color: var(--cm-on-primary);
     background: var(--el-color-primary);
     box-shadow: 0 4px 10px #d950201c;
@@ -396,7 +401,7 @@ function formatName(email) {
     &:active { transform: scale(.94); }
 
     .writer-text {
-      margin-left: 15px;
+      margin-left: 6px;
       font-size: 14px;
       font-weight: bold;;
     }
@@ -513,7 +518,7 @@ function formatName(email) {
   .header { gap: 8px; }
   .breadcrumb-item { font-size: 15px; }
   .writer-box { margin-left: 0; }
-  .writer-box .writer { width: 32px; height: 32px; }
+  .writer-box .writer { padding: 0 9px; height: 32px; }
   .toolbar .icon-item { width: 28px; height: 32px; }
   .toolbar .avatar .avatar-text { width: 30px; height: 30px; }
 }
