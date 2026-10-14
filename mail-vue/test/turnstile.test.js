@@ -32,20 +32,16 @@ test('missing site key blocks verification before any script is requested', asyn
   assert.equal(scripts.length, 0);
 });
 
-test('verification waits for a slow script and its ready callback', async () => {
+test('verification waits for a slow script to finish loading', async () => {
   const { scripts, getTurnstile } = await fixture();
-  let ready;
   let finished = false;
   const pending = getTurnstile('site-key').then(api => { finished = true; return api; });
   await Promise.resolve();
   assert.equal(finished, false);
   assert.equal(scripts.length, 1);
-  const api = { ready: callback => { ready = callback; }, render() {} };
+  const api = { render() {} };
   window.turnstile = api;
   scripts[0].dispatchEvent(new Event('load'));
-  await Promise.resolve();
-  assert.equal(finished, false);
-  ready();
   assert.equal(await pending, api);
 });
 
@@ -86,13 +82,23 @@ test('a stalled script times out and permits another attempt', async t => {
   assert.equal(await pending, api);
 });
 
-test('an already loaded script still waits until the API is ready', async () => {
+test('an already loaded API can be reused without another script request', async () => {
   const { scripts, getTurnstile } = await fixture();
-  let ready;
-  const api = { ready: callback => { ready = callback; }, render() {} };
+  const api = { render() {} };
   window.turnstile = api;
   const pending = getTurnstile('site-key');
   assert.equal(scripts.length, 0);
-  ready();
+  assert.equal(await pending, api);
+});
+
+test('an async-loaded Turnstile API remains usable when ready() rejects async scripts', async () => {
+  const { scripts, getTurnstile } = await fixture();
+  const api = {
+    render() {},
+    ready() { throw new Error('Remove async/defer before using turnstile.ready()'); },
+  };
+  const pending = getTurnstile('site-key');
+  window.turnstile = api;
+  scripts[0].dispatchEvent(new Event('load'));
   assert.equal(await pending, api);
 });

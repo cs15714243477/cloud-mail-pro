@@ -20,14 +20,10 @@ export async function getTurnstile(siteKey) {
     };
     const ready = () => {
       if (!window.turnstile?.render) return failed();
-      try {
-        window.turnstile.ready(() => {
-          cleanup();
-          resolve(window.turnstile);
-        });
-      } catch {
-        failed();
-      }
+      // api.js has executed before its load event. Its ready() method rejects
+      // async/defer scripts, so explicit rendering uses the loaded API directly.
+      cleanup();
+      resolve(window.turnstile);
     };
     const timeout = setTimeout(failed, 20000);
     if (window.turnstile?.render) {
