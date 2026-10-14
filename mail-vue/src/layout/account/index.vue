@@ -123,12 +123,8 @@
       <div
           class="add-email-turnstile"
           :class="verifyShow ? 'turnstile-show' : 'turnstile-hide'"
-          :data-sitekey="settingStore.settings.siteKey"
-          data-callback="onTurnstileSuccess"
-          data-error-callback="onTurnstileError"
-      >
-        <span style="font-size: 12px;color: #F56C6C" v-if="botJsError">{{ $t('verifyModuleFailed') }}</span>
-      </div>
+      ></div>
+      <span style="font-size: 12px;color: #F56C6C" v-if="verificationError">{{ $t(verificationError) }}</span>
     </el-dialog>
     <el-dialog v-model="setNameShow" :title="$t('changeUserName')">
       <div class="container">
@@ -143,7 +139,8 @@
 </template>
 <script setup>
 import {Icon} from "@iconify/vue";
-import {nextTick, reactive, ref, watch} from "vue";
+import {nextTick, onUnmounted, reactive, ref, watch} from "vue";
+import {getTurnstile} from '@/utils/turnstile.js';
 import {
   accountList,
   accountAdd,
@@ -183,9 +180,11 @@ const addRef = ref({})
 const scrollbarRef = ref({})
 let account = null
 let turnstileId = null
-const botJsError = ref(false)
+const verificationError = ref('')
 let verifyToken = ''
 let verifyErrorCount = 0
+let verificationRetry
+let disposed = false
 let first = true
 const addForm = reactive({
   email: '',
@@ -211,26 +210,53 @@ const openSelect = () => {
   mySelect.value.toggleMenu()
 }
 
-window.onTurnstileError = (e) => {
+function onTurnstileError() {
+  verifyToken = ''
+  verificationError.value = 'verifyModuleFailed'
   if (verifyErrorCount >= 4) {
     return
   }
   verifyErrorCount++
-  console.warn('人机验加载失败', e)
-  setTimeout(() => {
-    nextTick(() => {
-      if (!turnstileId) {
-        turnstileId = window.turnstile.render('.add-email-turnstile')
-      } else {
-        window.turnstile.reset(turnstileId);
-      }
-    })
-  }, 1500)
-};
+  clearTimeout(verificationRetry)
+  verificationRetry = setTimeout(() => showVerification(true), 1500)
+}
 
-window.onTurnstileSuccess = (token) => {
-  verifyToken = token;
-};
+async function showVerification(reset = false) {
+  if (disposed || addLoading.value || !showAdd.value) return
+  verifyShow.value = true
+  verificationError.value = ''
+  addLoading.value = true
+  try {
+    await nextTick()
+    const api = await getTurnstile(settingStore.settings.siteKey)
+    if (disposed || !showAdd.value) return
+    if (turnstileId === null) {
+      turnstileId = api.render('.add-email-turnstile', {
+        sitekey: settingStore.settings.siteKey,
+        callback: token => {
+          verifyToken = token
+          verificationError.value = ''
+          verifyErrorCount = 0
+        },
+        'expired-callback': () => { verifyToken = '' },
+        'error-callback': onTurnstileError,
+      })
+    } else if (reset) {
+      verifyToken = ''
+      api.reset(turnstileId)
+    }
+  } catch (error) {
+    verificationError.value = error.code === 'TURNSTILE_NOT_CONFIGURED' ? 'verifyNotConfigured' : 'verifyModuleFailed'
+  } finally {
+    addLoading.value = false
+  }
+}
+
+onUnmounted(() => {
+  disposed = true
+  clearTimeout(verificationRetry)
+  if (turnstileId !== null) window.turnstile?.remove(turnstileId)
+})
 
 function getSkeletonRows() {
   if (accounts.length > 20) return skeletonRows = 20
@@ -465,21 +491,10 @@ function submit() {
   }
 
   if (!verifyToken && (settingStore.settings.addEmailVerify === 0 || (settingStore.settings.addEmailVerify === 2 && settingStore.settings.addVerifyOpen))) {
-    if (!verifyShow.value) {
-      verifyShow.value = true
-      nextTick(() => {
-        if (!turnstileId) {
-          try {
-            turnstileId = window.turnstile.render('.add-email-turnstile')
-          } catch (e) {
-            botJsError.value = true
-            console.log('人机验证js加载失败')
-          }
-        } else {
-          window.turnstile.reset('.add-email-turnstile')
-        }
-      })
-    } else if (!botJsError.value) {
+    if (!verifyShow.value || turnstileId === null || verificationError.value) {
+      verifyErrorCount = 0
+      showVerification(true)
+    } else {
       ElMessage({
         message: t('botVerifyMsg'),
         type: "error",
@@ -505,18 +520,11 @@ function submit() {
     verifyShow.value = false
     userStore.refreshUserInfo()
   }).catch(res => {
+    addLoading.value = false
     if (res.code === 400) {
       verifyToken = ''
-      if (turnstileId) {
-        window.turnstile.reset(turnstileId)
-      } else {
-        nextTick(() => {
-          turnstileId = window.turnstile.render('.add-email-turnstile')
-        })
-      }
-      verifyShow.value = true
+      showVerification(true)
     }
-    addLoading.value = false
   })
 }
 </script>
